@@ -2,4 +2,8 @@ databaseChangeLog:
   - include:
       file: db/changelog/001-create-news-table.yaml
   - include:
-      file: db/changelog/002-insert-default-news-table.yaml
+      file: db/changelog/002-insert-news-table.yaml
+  - include:
+      file: db/changelog/003-create-api-user-table.yaml
+  - include:
+      file: db/changelog/004-insert-api-user-table.yaml
