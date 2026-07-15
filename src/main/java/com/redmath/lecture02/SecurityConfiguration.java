@@ -36,27 +36,4 @@ public class SecurityConfiguration {
 
         return http.build();
     }
-
-    @Bean
-    public UserDetailsService users() {
-        UserDetails reporter = User.builder()
-                .username("reporter")
-                .password("{noop}reporter")
-                .roles("REPORTER")
-                .build();
-
-        UserDetails editor = User.builder()
-                .username("editor")
-                .password("{noop}editor")
-                .roles("EDITOR")
-                .build();
-
-        UserDetails admin = User.builder()
-                .username("admin")
-                .password("{noop}admin")
-                .roles("ADMIN")
-                .build();
-
-        return new InMemoryUserDetailsManager(reporter, editor, admin);
-    }
 }
