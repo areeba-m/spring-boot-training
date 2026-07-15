@@ -11,7 +11,7 @@ databaseChangeLog:
                   value: admin
               - column:
                   name: password
-                  value: "$2a$10$8.UnVuG9HHgUDzoMcNYY7eZxy1TOC5b18m3EPY.B6Y1N/I6b6pS2y" # BCrypt for 'password123'
+                  value: "{bcrypt}$2a$10$8.UnVuG9HHgUDzoMcNYY7eZxy1TOC5b18m3EPY.B6Y1N/I6b6pS2y" # BCrypt for 'password123'
               - column:
                   name: role
                   value: ADMIN
@@ -25,7 +25,7 @@ databaseChangeLog:
                   value: editor
               - column:
                   name: password
-                  value: "$2a$10$8.UnVuG9HHgUDzoMcNYY7eZxy1TOC5b18m3EPY.B6Y1N/I6b6pS2y" # BCrypt for 'password123'
+                  value: "{bcrypt}$2a$12$b2po9451UN9mta.ZDUOyhefbQVH1U7eZOiUqgndkzLfkoVrXU4fDq" # BCrypt for 'password123'
               - column:
                   name: role
                   value: EDITOR
@@ -39,7 +39,7 @@ databaseChangeLog:
                   value: reporter
               - column:
                   name: password
-                  value: "$2a$10$8.UnVuG9HHgUDzoMcNYY7eZxy1TOC5b18m3EPY.B6Y1N/I6b6pS2y" # BCrypt for 'password123'
+                  value: "{bcrypt}$2a$12$b2po9451UN9mta.ZDUOyhefbQVH1U7eZOiUqgndkzLfkoVrXU4fDq" # BCrypt for 'password123'
               - column:
                   name: role
                   value: REPORTER

@@ -10,7 +10,7 @@ logging:
   level:
     sql: debug
     org.springframework.security: DEBUG
-#    liquibase: debug
+    liquibase: debug
 
 
 management:
@@ -18,6 +18,9 @@ management:
     sampling:
       probability: 1.0  # Send 100% of requests to Jaeger for testing
     otlp:
+      metrics:
+        export:
+          enabled: false
       tracing:
         endpoint: "http://localhost:4318/v1/traces"
   endpoints:
@@ -27,4 +30,4 @@ management:
   prometheus:
     metrics:
       export:
-        enabled: true
+        enabled: false
