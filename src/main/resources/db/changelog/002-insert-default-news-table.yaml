@@ -1,0 +1,45 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2-insert-default-news
+      author: news-service
+      runAlways: true
+      changes:
+        - delete:
+            tableName: news
+            where: "news_id IN (1, 2)"
+        - insert:
+            tableName: news
+            columns:
+              - column:
+                  name: news_id
+                  valueNumeric: 1
+              - column:
+                  name: title
+                  value: "Welcome to the News Service"
+              - column:
+                  name: description
+                  value: "This is a default news article populated automatically on startup."
+              - column:
+                  name: reported_by
+                  value: "System Admin"
+              - column:
+                  name: reported_at
+                  valueComputed: "now()"
+        - insert:
+            tableName: news
+            columns:
+              - column:
+                  name: news_id
+                  valueNumeric: 2
+              - column:
+                  name: title
+                  value: "Liquibase System Check"
+              - column:
+                  name: description
+                  value: "Database migrations and default datasets are verified and running."
+              - column:
+                  name: reported_by
+                  value: "System Admin"
+              - column:
+                  name: reported_at
+                  valueComputed: "now()"

@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: lecture02
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+
+logging:
+  level:
+    sql: debug
+    org.springframework.security: DEBUG
+#    liquibase: debug
+
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0  # Send 100% of requests to Jaeger for testing
+    otlp:
+      tracing:
+        endpoint: "http://localhost:4318/v1/traces"
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  prometheus:
+    metrics:
+      export:
+        enabled: true
