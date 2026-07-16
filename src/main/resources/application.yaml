@@ -6,12 +6,14 @@ spring:
     hibernate:
       ddl-auto: none
 
+welcome:
+  app-message: Welcome from application properties
+
 logging:
   level:
     sql: debug
     org.springframework.security: DEBUG
     liquibase: debug
-
 
 management:
   tracing:
