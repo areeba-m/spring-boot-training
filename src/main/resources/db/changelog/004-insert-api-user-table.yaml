@@ -43,3 +43,17 @@ databaseChangeLog:
               - column:
                   name: role
                   value: REPORTER
+
+        # 4. Insert another REPORTER user
+        - insert:
+            tableName: api_user
+            columns:
+              - column:
+                  name: username
+                  value: reporter2
+              - column:
+                  name: password
+                  value: "{bcrypt}$2a$12$b2po9451UN9mta.ZDUOyhefbQVH1U7eZOiUqgndkzLfkoVrXU4fDq" # BCrypt for 'password123'
+              - column:
+                  name: role
+                  value: REPORTER

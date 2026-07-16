@@ -3,6 +3,10 @@ package com.redmath.lecture02.news;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -26,27 +30,47 @@ public class NewsService {
         return newsRepository.findById(id);
     }
 
+    @PreAuthorize("hasAnyRole('REPORTER', 'EDITOR', 'ADMIN')")
     public News create(News news){
+        news.setReportedBy(SecurityContextHolder.getContext().getAuthentication().getName());
         news.setNewsId(System.currentTimeMillis());
         news.setReportedAt(LocalDateTime.now());
         return newsRepository.save(news); // TODO: null news objects are not created
     }
 
+    @PreAuthorize("hasAnyRole('REPORTER', 'EDITOR', 'ADMIN')")
     @Transactional
     public News update(Long id, News updatedNews){
-        return newsRepository.findById(id)
-                .map(currentNews -> {
-                    currentNews.setTitle(updatedNews.getTitle());
-                    currentNews.setDescription(updatedNews.getDescription());
-                    currentNews.setReportedBy(updatedNews.getReportedBy());
+        News currentNews = newsRepository.findById(id)
+                .orElseThrow(() -> new NewsNotFoundException(id));
 
-                    return newsRepository.save(currentNews);
+        validateUpdatePermission(currentNews);
 
-                }).orElseThrow(() -> new RuntimeException("Failed to update. News not found with id: " + id));
+        currentNews.setTitle(updatedNews.getTitle());
+        currentNews.setDescription(updatedNews.getDescription());
+        return newsRepository.save(currentNews);
+
     }
 
+    @PreAuthorize("hasAnyRole('EDITOR', 'ADMIN')")
     public void delete(Long id){
         if (newsRepository.existsById(id)) newsRepository.deleteById(id);
-        else throw new RuntimeException("Failed to delete. News not found with id:" +id);
+        else throw new NewsNotFoundException(id);
+    }
+
+    private void validateUpdatePermission(News news){
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        boolean isOwner = auth.getName().equals(news.getReportedBy());
+        boolean isEditor = auth.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(role ->
+                        role.equals("ROLE_EDITOR") || role.equals("ROLE_ADMIN")
+                );
+
+        if (!isOwner && !isEditor) {
+            throw new AccessDeniedException(
+                    "You are not allowed to update this article.");
+        }
     }
 }
