@@ -3,6 +3,7 @@ package com.redmath.lecture02.news;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -38,9 +39,9 @@ public class NewsService {
         return newsRepository.save(news); // TODO: null news objects are not created
     }
 
-    @PreAuthorize("hasAnyRole('REPORTER', 'EDITOR', 'ADMIN')")
     @Transactional
-    public News update(Long id, News updatedNews){
+    @PreAuthorize("hasAnyRole('REPORTER', 'EDITOR', 'ADMIN')")
+    public News update(Long id, News updatedNews) {
         News currentNews = newsRepository.findById(id)
                 .orElseThrow(() -> new NewsNotFoundException(id));
 
@@ -49,11 +50,10 @@ public class NewsService {
         currentNews.setTitle(updatedNews.getTitle());
         currentNews.setDescription(updatedNews.getDescription());
         return newsRepository.save(currentNews);
-
     }
 
     @PreAuthorize("hasAnyRole('EDITOR', 'ADMIN')")
-    public void delete(Long id){
+    public void delete(Long id) {
         if (newsRepository.existsById(id)) newsRepository.deleteById(id);
         else throw new NewsNotFoundException(id);
     }
