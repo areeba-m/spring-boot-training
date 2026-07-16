@@ -1,6 +1,5 @@
 package com.redmath;
 
-import com.redmath.lecture06.user.ApiUserService;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
@@ -9,22 +8,20 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 @Configuration
 //@EnableMethodSecurity
 @SecurityScheme(name = "basicAuth", type = SecuritySchemeType.HTTP, scheme = "basic")
 public class SecurityConfiguration {
 
-    private final ApiUserService apiUserService;
-
-    public SecurityConfiguration(ApiUserService apiUserService) {
-        this.apiUserService = apiUserService;
-    }
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(auth -> auth.disable())
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
                 .formLogin(Customizer.withDefaults())
                 .httpBasic(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
