@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/welcome")
+@RequestMapping("/api/v1/welcome")
 public class WelcomeController {
 
     private final WelcomeConfiguration configuration;

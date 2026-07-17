@@ -11,14 +11,19 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.core.DefaultOAuth2AuthenticatedPrincipal;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import tools.jackson.databind.ObjectMapper;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Configuration
 @EnableMethodSecurity
@@ -28,10 +33,7 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, ApiUserService userService) throws Exception {
         http
-                .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                )
+                .csrf(csrf -> csrf.disable())
                 .httpBasic(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/api/v1/news", "/api/v1/news/*").permitAll()
@@ -54,10 +56,17 @@ public class SecurityConfiguration {
                 .oauth2ResourceServer(config -> config
                         .opaqueToken(config2 -> config2.introspector(token -> {
                             ApiUser user = userService.findByToken(token);
+
+                            List<GrantedAuthority> authorities = Arrays.stream(user.getRole().split(","))
+                                    .map(String::trim)
+                                    .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
+                                    .map(SimpleGrantedAuthority::new)
+                                    .collect(Collectors.toList());
+
                             return new DefaultOAuth2AuthenticatedPrincipal(
                                     user.getUsername(),
                                     Map.of("sub", user.getUsername()),
-                                    AuthorityUtils.createAuthorityList(user.getRole().split(","))
+                                    authorities
                             );
                         }))
                 )
