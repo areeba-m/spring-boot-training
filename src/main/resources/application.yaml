@@ -6,6 +6,11 @@ spring:
     hibernate:
       ddl-auto: none
 
+security:
+  jwt:
+    issuer: news-api
+    expiration: 3600000
+
 welcome:
   app-message: Welcome from application properties
 
@@ -15,21 +20,21 @@ logging:
     org.springframework.security: DEBUG
     liquibase: debug
 
-management:
-  tracing:
-    sampling:
-      probability: 1.0  # Send 100% of requests to Jaeger for testing
-    otlp:
-      metrics:
-        export:
-          enabled: false
-      tracing:
-        endpoint: "http://localhost:4318/v1/traces"
-  endpoints:
-    web:
-      exposure:
-        include: health,info,prometheus
-  prometheus:
-    metrics:
-      export:
-        enabled: false
+#management:
+#  tracing:
+#    sampling:
+#      probability: 1.0  # Send 100% of requests to Jaeger for testing
+#    otlp:
+#      metrics:
+#        export:
+#          enabled: false
+#      tracing:
+#        endpoint: "http://localhost:4318/v1/traces"
+#  endpoints:
+#    web:
+#      exposure:
+#        include: health,info,prometheus
+#  prometheus:
+#    metrics:
+#      export:
+#        enabled: false
