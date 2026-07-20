@@ -1,10 +1,12 @@
 package com.redmath.lecture06.user;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwsHeader;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
@@ -25,6 +27,9 @@ public class ApiUserService implements UserDetailsService {
 
     private ApiUserRepository userRepository;
     private JwtEncoder jwtEncoder;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
     @Value("${security.jwt.issuer}")
     private String issuer;
@@ -67,7 +72,7 @@ public class ApiUserService implements UserDetailsService {
         ApiUser newUser = new ApiUser();
         newUser.setUserId(System.currentTimeMillis());
         newUser.setUsername(username);
-        newUser.setPassword(UUID.randomUUID().toString());
+        newUser.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
         newUser.setRole("REPORTER");
         newUser.setCreatedAt(LocalDateTime.now());
         newUser.setUpdatedAt(LocalDateTime.now());
