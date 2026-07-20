@@ -11,11 +11,16 @@ import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 @Service
 public class ApiUserService implements UserDetailsService {
 
@@ -41,8 +46,36 @@ public class ApiUserService implements UserDetailsService {
                 .build();
     }
 
+    public String registerAndGenerateToken(String username){
+        Optional<ApiUser> user = userRepository.findByUsername(username);
+        if(user.isEmpty()){
+            user = Optional.of(registerOAuthUser(username));
+        }
+        return generateJwt(user.get());
+    }
+
     public String generateToken(String username){
         ApiUser user = findUser(username);
+        return generateJwt(user);
+    }
+
+    private ApiUser findUser(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+    }
+
+    private ApiUser registerOAuthUser(String username) {
+        ApiUser newUser = new ApiUser();
+        newUser.setUserId(System.currentTimeMillis());
+        newUser.setUsername(username);
+        newUser.setPassword(UUID.randomUUID().toString());
+        newUser.setRole("REPORTER");
+        newUser.setCreatedAt(LocalDateTime.now());
+        newUser.setUpdatedAt(LocalDateTime.now());
+        return userRepository.save(newUser);
+    }
+
+    private String generateJwt(ApiUser user) {
         Instant now = Instant.now();
         List<String> roles = Arrays.stream(user.getRole().split(","))
                 .map(String::trim)
@@ -50,7 +83,7 @@ public class ApiUserService implements UserDetailsService {
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer(issuer)
-                .subject(username)
+                .subject(user.getUsername())
                 .issuedAt(now)
                 .expiresAt(now.plus(expirationMillis, ChronoUnit.MILLIS))
                 .claim("roles", roles)
@@ -58,11 +91,6 @@ public class ApiUserService implements UserDetailsService {
 
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
         return jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
-    }
-
-    private ApiUser findUser(String username) {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
     }
 
 }
