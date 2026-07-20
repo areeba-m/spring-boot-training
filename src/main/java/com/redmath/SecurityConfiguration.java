@@ -12,6 +12,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
@@ -54,10 +56,8 @@ public class SecurityConfiguration {
                 )
                 .oauth2Login(oauth2 -> oauth2
                         .successHandler((request, response, authentication) -> {
-                            OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-                            String email = oAuth2User.getAttribute("email");
 
-                            String token = userService.registerAndGenerateToken(email);
+                            String token = userService.registerAndGenerateToken(getProviderUsername(authentication));
 
                             response.setContentType("application/json");
                             response.getWriter().write("{\"access_token\":" + "\"" + token + "\"}");
@@ -68,5 +68,20 @@ public class SecurityConfiguration {
                 );
 
         return http.build();
+    }
+
+    private String getProviderUsername(Authentication authentication) {
+        OAuth2AuthenticationToken oAuth2Token = (OAuth2AuthenticationToken) authentication;
+        String provider = oAuth2Token.getAuthorizedClientRegistrationId();
+
+        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
+
+        if("google".equalsIgnoreCase(provider)){
+            return oAuth2User.getAttribute("email");
+        } else if ("github".equalsIgnoreCase(provider)){
+            return oAuth2User.getAttribute("login");
+        }
+
+        return oAuth2User.getAttribute("email");
     }
 }
