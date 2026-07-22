@@ -1,7 +1,10 @@
 package com.redmath.lecture06.user;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -50,17 +53,22 @@ public class ApiUserService implements UserDetailsService {
                 .build();
     }
 
-    public String registerAndGenerateToken(String username){
+    public ApiUser registerAndGenerateToken(String username) {
         Optional<ApiUser> user = userRepository.findByUsername(username);
-        if(user.isEmpty()){
+        if (user.isEmpty()) {
             user = Optional.of(registerOAuthUser(username));
         }
-        return generateJwt(user.get());
+        return generateToken(user.get());
     }
 
-    public String generateToken(String username){
+    public ApiUser generateToken(String username) {
         ApiUser user = findUser(username);
-        return generateJwt(user);
+        return generateToken(user);
+    }
+
+    private ApiUser generateToken(ApiUser user) {
+        user.setToken(UUID.randomUUID().toString());
+        return userRepository.save(user);
     }
 
     private ApiUser findUser(String username) {

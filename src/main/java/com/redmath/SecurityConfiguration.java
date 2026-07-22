@@ -30,13 +30,11 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                           ApiUserService userService,
-                                           JwtAuthenticationConverter jwtAuthenticationConverter) throws Exception {
+                                           ApiSecurityService securityService) throws Exception {
         http
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                )
+                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/api/v1/news", "/api/v1/news/*").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/news").hasAnyRole("REPORTER", "EDITOR")
@@ -44,30 +42,16 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/news/*").hasRole("EDITOR")
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/error").permitAll()
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 .sessionManagement(config -> config
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .formLogin(config -> config
-                        .successHandler((request, response, authentication) -> {
-                            String token = userService.generateToken(authentication.getName());
-                            response.setContentType("application/json");
-                            response.getWriter().write("{\"access_token\":" + "\"" + token + "\"}");
-                        })
-                )
+                        .successHandler(securityService::onAuthenticationSuccessForm))
                 .oauth2Login(oauth2 -> oauth2
-                        .successHandler((request, response, authentication) -> {
-
-                            String token = userService.registerAndGenerateToken(getProviderUsername(authentication));
-
-                            response.setContentType("application/json");
-                            response.getWriter().write("{\"access_token\":" + "\"" + token + "\"}");
-                        })
-                )
+                        .successHandler(securityService::onAuthenticationSuccessOauth))
                 .oauth2ResourceServer(config -> config
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter))
-                );
+                        .opaqueToken(config2 -> config2
+                                .introspector(securityService::verify)));
 
         return http.build();
     }
@@ -77,18 +61,4 @@ public class SecurityConfiguration {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
-    private String getProviderUsername(Authentication authentication) {
-        OAuth2AuthenticationToken oAuth2Token = (OAuth2AuthenticationToken) authentication;
-        String provider = oAuth2Token.getAuthorizedClientRegistrationId();
-
-        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-
-        if("google".equalsIgnoreCase(provider)){
-            return oAuth2User.getAttribute("email");
-        } else if ("github".equalsIgnoreCase(provider)){
-            return oAuth2User.getAttribute("login");
-        }
-
-        return oAuth2User.getAttribute("email");
-    }
 }

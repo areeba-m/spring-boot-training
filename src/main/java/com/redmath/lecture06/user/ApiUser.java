@@ -17,4 +17,5 @@ public class ApiUser {
     private String role;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String token;
 }
