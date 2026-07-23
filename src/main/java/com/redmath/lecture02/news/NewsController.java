@@ -3,11 +3,9 @@ package com.redmath.lecture02.news;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-import java.util.Optional;
 
 /*
 GET /api/v2/news
@@ -36,23 +34,19 @@ public class NewsController {
     }
 
     @GetMapping("/{newsId}")
-    public ResponseEntity<News> findOne(@PathVariable Long newsId){
-        Optional<News> value = newsService.findOne(newsId);
-        if(value.isPresent())
-            return ResponseEntity.ok(value.get());
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<NewsResponseDto> findOne(@PathVariable Long newsId){
+        return ResponseEntity.ok(newsService.findOne(newsId));
     }
 
     @PostMapping
-    public ResponseEntity<News> create(@RequestBody News news){
+    public ResponseEntity<NewsResponseDto> create(@RequestBody NewsCreateDto news){
         return ResponseEntity.status(HttpStatus.CREATED).body(newsService.create(news));
     }
 
     @PutMapping("/{newsId}")
-    public ResponseEntity<News> update(@PathVariable Long newsId,
-                       @RequestBody News updatedNews){
-        News savedNews = newsService.update(newsId, updatedNews);
-        return ResponseEntity.ok(savedNews);
+    public ResponseEntity<NewsResponseDto> update(@PathVariable Long newsId,
+                       @RequestBody NewsCreateDto updatedNews){
+        return ResponseEntity.ok(newsService.update(newsId, updatedNews));
     }
 
     @DeleteMapping("/{newsId}")

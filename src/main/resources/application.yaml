@@ -42,9 +42,9 @@ welcome:
 
 logging:
   level:
-    sql: debug
-    org.springframework.security: DEBUG
-    liquibase: debug
+    sql: OFF
+    org.springframework.security: OFF
+    liquibase: OFF
 
 #management:
 #  tracing:

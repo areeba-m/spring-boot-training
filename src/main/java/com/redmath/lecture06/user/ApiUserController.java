@@ -10,13 +10,14 @@ import java.util.List;
 @RequestMapping("/api/v1/users")
 public class ApiUserController {
     private final ApiUserRepository userRepository;
+    private ApiUserMapper userMapper;
 
     public ApiUserController(ApiUserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
     @GetMapping
-    public List<ApiUser> findAll(){
-        return userRepository.findAll();
+    public List<ApiUserDto> findAll(){
+        return userMapper.toResponseDto(userRepository.findAll());
     }
 }

@@ -11,11 +11,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Service
 public class NewsService {
     private NewsRepository newsRepository;
+    private NewsMapper newsMapper;
 
     public NewsService(NewsRepository newsRepository) {
         this.newsRepository = newsRepository;
@@ -27,21 +27,30 @@ public class NewsService {
         return newsRepository.findAll(PageRequest.of(page,size));
     }
 
-    public Optional<News> findOne(Long id){
-        return newsRepository.findById(id);
+    public NewsResponseDto findOne(Long id){
+        return newsRepository.findById(id)
+                .map(newsMapper::toResponseDto)
+                .orElseThrow(() -> new NewsNotFoundException(id));
     }
 
     @PreAuthorize("hasAnyRole('REPORTER', 'EDITOR', 'ADMIN')")
-    public News create(News news){
-        news.setReportedBy(SecurityContextHolder.getContext().getAuthentication().getName());
+    public NewsResponseDto create(NewsCreateDto newsCreateDto){
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new AccessDeniedException("User is not authenticated.");
+        }
+        News news = new News();
+        news.setReportedBy(auth.getName());
         news.setNewsId(System.currentTimeMillis());
         news.setReportedAt(LocalDateTime.now());
-        return newsRepository.save(news); // TODO: null news objects are not created
+        news.setDescription(newsCreateDto.getDescription());
+        news.setTitle(newsCreateDto.getTitle());
+        return newsMapper.toResponseDto(newsRepository.save(news));
     }
 
     @Transactional
     @PreAuthorize("hasAnyRole('REPORTER', 'EDITOR', 'ADMIN')")
-    public News update(Long id, News updatedNews) {
+    public NewsResponseDto update(Long id, NewsCreateDto updatedNews) {
         News currentNews = newsRepository.findById(id)
                 .orElseThrow(() -> new NewsNotFoundException(id));
 
@@ -49,7 +58,7 @@ public class NewsService {
 
         currentNews.setTitle(updatedNews.getTitle());
         currentNews.setDescription(updatedNews.getDescription());
-        return newsRepository.save(currentNews);
+        return newsMapper.toResponseDto(newsRepository.save(currentNews));
     }
 
     @PreAuthorize("hasAnyRole('EDITOR', 'ADMIN')")
@@ -60,7 +69,9 @@ public class NewsService {
 
     private void validateUpdatePermission(News news){
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new AccessDeniedException("User is not authenticated.");
+        }
         boolean isOwner = auth.getName().equals(news.getReportedBy());
         boolean isEditor = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)

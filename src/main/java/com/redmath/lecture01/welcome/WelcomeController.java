@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
@@ -16,11 +15,11 @@ public class WelcomeController {
 
     private final WelcomeConfiguration configuration;
 
-    @Value("${welcome.sys-message}")
+    @Value("${welcome.sys-message:Default Sys}")
     private String sysMessage;
-    @Value("${WELCOME_ENV-MESSAGE}")
+    @Value("${WELCOME_ENV-MESSAGE:Default Env}")
     private String envMessage;
-    @Value("${welcome.app-message}")
+    @Value("${welcome.app-message:Default App}")
     private String appMessage;
 
     public WelcomeController(WelcomeConfiguration configuration) {

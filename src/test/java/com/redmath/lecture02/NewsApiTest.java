@@ -1,7 +1,6 @@
 package com.redmath.lecture02;
 
-import com.redmath.lecture02.news.News;
-import com.redmath.lecture02.news.NewsService;
+import com.redmath.lecture02.news.*;
 import jakarta.servlet.ServletException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -13,13 +12,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -43,6 +43,7 @@ public class NewsApiTest {
     private NewsService newsService;
 
     private News news1, news2;
+    private NewsResponseDto newsResponseDto1, newsResponseDto2;
 
     @BeforeEach
      void setup(){
@@ -59,6 +60,20 @@ public class NewsApiTest {
         news2.setDescription("Test description 2");
         news2.setReportedBy("Test Reporter");
         news2.setReportedAt(LocalDateTime.of(2026, 7,12, 4, 0));
+
+        newsResponseDto1 = new NewsResponseDto();
+        newsResponseDto1.setNewsId(news1.getNewsId());
+        newsResponseDto1.setTitle(news1.getTitle());
+        newsResponseDto1.setDescription(news1.getDescription());
+        newsResponseDto1.setReportedBy(news1.getReportedBy());
+        newsResponseDto1.setReportedAt(news1.getReportedAt());
+
+        newsResponseDto2 = new NewsResponseDto();
+        newsResponseDto2.setNewsId(news2.getNewsId());
+        newsResponseDto2.setTitle(news2.getTitle());
+        newsResponseDto2.setDescription(news2.getDescription());
+        newsResponseDto2.setReportedBy(news2.getReportedBy());
+        newsResponseDto2.setReportedAt(news2.getReportedAt());
     }
 
     /**
@@ -78,7 +93,8 @@ public class NewsApiTest {
 
         when(newsService.findAll(defaultPage,defaultSize)).thenReturn(page);
 
-        mockMvc.perform(get("/api/v1/news"))
+        mockMvc.perform(get("/api/v1/news")
+                        .with(SecurityMockMvcRequestPostProcessors.csrf()))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
@@ -140,7 +156,7 @@ public class NewsApiTest {
     @Test
     @DisplayName("returns news object found if exists in database")
     void findOne_returnsNews() throws Exception{
-        when(newsService.findOne(news1.getNewsId())).thenReturn(Optional.ofNullable(news1));
+        when(newsService.findOne(news1.getNewsId())).thenReturn(newsResponseDto1);
 
         mockMvc.perform(get("/api/v1/news/{newsId}", news1.getNewsId()))
                 .andDo(print())
@@ -157,7 +173,7 @@ public class NewsApiTest {
     @DisplayName("returns 404 news object not found if not exists in database")
     void findOne_returnsNotFoundNews() throws Exception{
         Long newsId = 99L;
-        when(newsService.findOne(newsId)).thenReturn(Optional.empty());
+        when(newsService.findOne(newsId)).thenThrow(new NewsNotFoundException(newsId));
 
         mockMvc.perform(get("/api/v1/news/{newsId}", newsId))
                 .andDo(print())
@@ -172,11 +188,15 @@ public class NewsApiTest {
     void create_returnsNews() throws Exception{
         when(newsService.create(
                 argThat(news -> news.getTitle().equals("Test News 1")))
-        ).thenReturn(news1);
+        ).thenReturn(newsResponseDto1);
 
         mockMvc.perform(post("/api/v1/news")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(news1)))
+                        .content(objectMapper.writeValueAsString(news1))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
+                        .with(SecurityMockMvcRequestPostProcessors.opaqueToken()
+                                .attributes(attrs -> attrs.put("sub", "Test Reporter"))
+                                .authorities(new SimpleGrantedAuthority("ROLE_REPORTER"))))
                 .andDo(print())
                 .andExpect(status().isCreated())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
@@ -193,28 +213,32 @@ public class NewsApiTest {
     @Test
     @DisplayName("returns updated news object that exists in database")
     void update_returnUpdatedNews() throws Exception{
-        News updatedNews = new News();
-        updatedNews.setNewsId(news1.getNewsId());
-        updatedNews.setTitle("Updated Test News 1");
-        updatedNews.setDescription("Updated Test description 1");
-        updatedNews.setReportedBy("Updated Test Reporter");
-        updatedNews.setReportedAt(news1.getReportedAt());
+        NewsResponseDto updatedResponseDto = new NewsResponseDto();
+        updatedResponseDto.setNewsId(news1.getNewsId());
+        updatedResponseDto.setTitle("Updated Test News 1");
+        updatedResponseDto.setDescription("Updated Test description 1");
+        updatedResponseDto.setReportedBy("Updated Test Reporter");
+        updatedResponseDto.setReportedAt(news1.getReportedAt());
 
         when(newsService.update(
                 eq(news1.getNewsId()),
                 argThat(news -> news.getTitle().equals("Updated Test News 1")))
-        ).thenReturn(updatedNews);
+        ).thenReturn(updatedResponseDto);
 
         mockMvc.perform(put("/api/v1/news/{newsId}", news1.getNewsId())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updatedNews)))
+                        .content(objectMapper.writeValueAsString(updatedResponseDto))
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
+                        .with(SecurityMockMvcRequestPostProcessors.opaqueToken()
+                                .attributes(attrs -> attrs.put("sub", "Test Reporter"))
+                                .authorities(new SimpleGrantedAuthority("ROLE_REPORTER"))))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.newsId").value(1))
-                .andExpect(jsonPath("$.title").value(updatedNews.getTitle()))
-                .andExpect(jsonPath("$.description").value(updatedNews.getDescription()))
-                .andExpect(jsonPath("$.reportedBy").value(updatedNews.getReportedBy()))
+                .andExpect(jsonPath("$.title").value(updatedResponseDto.getTitle()))
+                .andExpect(jsonPath("$.description").value(updatedResponseDto.getDescription()))
+                .andExpect(jsonPath("$.reportedBy").value(updatedResponseDto.getReportedBy()))
                 .andExpect(jsonPath("$.reportedAt").exists());
     }
 
@@ -227,7 +251,11 @@ public class NewsApiTest {
         doNothing().when(newsService).delete(news1.getNewsId());
 
         mockMvc.perform(delete("/api/v1/news/{newsId}", news1.getNewsId())
-                        .contentType(MediaType.APPLICATION_JSON))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
+                        .with(SecurityMockMvcRequestPostProcessors.opaqueToken()
+                                .attributes(attrs -> attrs.put("sub", "Test Editor"))
+                                .authorities(new SimpleGrantedAuthority("ROLE_EDITOR"))))
                 .andExpect(status().isNoContent())
                 .andDo(print());
     }
@@ -243,10 +271,13 @@ public class NewsApiTest {
         // MockMvc catches that unhandled exception and wraps it in a ServletException
         ServletException exception = assertThrows(ServletException.class, () -> {
             mockMvc.perform(delete("/api/v1/news/{newsId}", newsId)
-                    .contentType(MediaType.APPLICATION_JSON));
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .with(SecurityMockMvcRequestPostProcessors.csrf())
+                    .with(SecurityMockMvcRequestPostProcessors.opaqueToken()
+                            .attributes(attrs -> attrs.put("sub", "Test Editor"))
+                            .authorities(new SimpleGrantedAuthority("ROLE_EDITOR"))));
         });
 
         assertInstanceOf(RuntimeException.class, exception.getRootCause());
-
     }
 }

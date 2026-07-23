@@ -5,6 +5,8 @@ import com.redmath.lecture06.user.ApiUserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -13,11 +15,12 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
@@ -26,14 +29,20 @@ import java.util.Map;
 
 @Slf4j
 @Service
-public class ApiSecurityService {
-    private final ApiUserService userService;
-    private final NimbusJwtEncoder jwtEncoder;
-    private final NimbusJwtDecoder jwtDecoder;
-    private final SignatureAlgorithm jwtAlgorithm;
+public class ApiSecurityService implements InitializingBean {
+    private ApiUserService userService;
+    private NimbusJwtEncoder jwtEncoder;
+    private NimbusJwtDecoder jwtDecoder;
+    private SignatureAlgorithm jwtAlgorithm;
+    private ObjectMapper objectMapper;
 
-    public ApiSecurityService(ApiUserService userService) throws NoSuchAlgorithmException {
+    public ApiSecurityService(ApiUserService userService, ObjectMapper objectMapper) {
         this.userService = userService;
+        this.objectMapper = objectMapper;
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
         this.jwtAlgorithm = SignatureAlgorithm.PS256;
         KeyPair keyPair = KeyPairGenerator.getInstance("RSA").generateKeyPair();
         this.jwtEncoder = NimbusJwtEncoder.withKeyPair((RSAPublicKey) keyPair.getPublic(),
@@ -77,7 +86,14 @@ public class ApiSecurityService {
                 .expiresAt(Instant.now().plusSeconds(300))
                 .build();
         Jwt jwt = jwtEncoder.encode(JwtEncoderParameters.from(header, claims));
-        response.getWriter().write("{\"access_token\":" + "\"" + jwt.getTokenValue() + "\"}");
+
+        Map<String, String> tokenResponse = Map.of("access_token", jwt.getTokenValue());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setHeader("X-Content-Type-Options", "nosniff");
+        response.setHeader("Cache-Control", "no-store"); // Good security practice for tokens
+
+        objectMapper.writeValue(response.getOutputStream(), tokenResponse);
     }
 
     private String getProviderUsername(Authentication authentication) {
@@ -85,7 +101,8 @@ public class ApiSecurityService {
         String provider = oAuth2Token.getAuthorizedClientRegistrationId();
 
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-
+        if(oAuth2User == null)
+            return null;
         if("google".equalsIgnoreCase(provider)){
             return oAuth2User.getAttribute("email");
         } else if ("github".equalsIgnoreCase(provider)){
