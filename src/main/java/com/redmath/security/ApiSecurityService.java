@@ -1,12 +1,15 @@
 package com.redmath.security;
 
-import com.redmath.lecture06.ApiUser;
-import com.redmath.lecture06.ApiUserService;
+import com.redmath.lecture06.user.ApiUser;
+import com.redmath.lecture06.user.ApiUserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.DefaultOAuth2AuthenticatedPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -16,8 +19,12 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class ApiSecurityService {
 
@@ -49,11 +56,18 @@ public class ApiSecurityService {
         Jwt jwt = jwtService.decode(token);
         String username = jwt.getSubject();
         String roles = jwt.getClaimAsString("scope");
+        log.info("[LOGGER] jwt decoded username: {}, roles: {}", username, roles);
+
+        List<GrantedAuthority> authorities = Arrays.stream(roles.split(","))
+                .map(String::trim)
+                .map(role -> role.startsWith("ROLE_") ? role : "ROLE_" + role)
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
 
         return new DefaultOAuth2AuthenticatedPrincipal(
                 username,
                 Map.of("sub", username),
-                AuthorityUtils.createAuthorityList(roles.split(",")));
+                authorities);
     }
 
     private void generateJwtToken(HttpServletResponse response, ApiUser user) throws IOException {
@@ -79,7 +93,6 @@ public class ApiSecurityService {
         } else if ("github".equalsIgnoreCase(provider)){
             return oAuth2User.getAttribute("login");
         }
-
         return oAuth2User.getAttribute("email");
     }
 }

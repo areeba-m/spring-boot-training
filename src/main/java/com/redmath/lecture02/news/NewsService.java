@@ -1,8 +1,14 @@
 package com.redmath.lecture02.news;
 
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -13,10 +19,11 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+@Slf4j
 @Service
 public class NewsService {
-    private NewsRepository newsRepository;
-    private NewsMapper newsMapper;
+    private final NewsRepository newsRepository;
+    private final NewsMapper newsMapper;
 
     public NewsService(NewsRepository newsRepository, NewsMapper newsMapper) {
         this.newsRepository = newsRepository;
@@ -29,7 +36,9 @@ public class NewsService {
         return newsRepository.findAll(PageRequest.of(page,size));
     }
 
+    @Cacheable(value = "news", key = "#id")
     public NewsResponseDto findOne(Long id){
+        log.info("[CACHE] news: {}", id);
         return newsRepository.findById(id)
                 .map(newsMapper::toResponseDto)
                 .orElseThrow(() -> new NewsNotFoundException(id));
@@ -49,6 +58,7 @@ public class NewsService {
 
     @Transactional
     @PreAuthorize("hasAnyRole('REPORTER', 'EDITOR', 'ADMIN')")
+    @CachePut(value = "news", key = "#id")
     public NewsResponseDto update(Long id, NewsCreateDto updatedNews) {
         News currentNews = newsRepository.findById(id)
                 .orElseThrow(() -> new NewsNotFoundException(id));
@@ -57,11 +67,14 @@ public class NewsService {
 
         currentNews.setTitle(updatedNews.getTitle());
         currentNews.setDescription(updatedNews.getDescription());
+        log.info("[CACHE] updating news: {}", id);
         return newsMapper.toResponseDto(newsRepository.save(currentNews));
     }
 
     @PreAuthorize("hasAnyRole('EDITOR', 'ADMIN')")
+    @CacheEvict(value = "news", key = "#id")
     public void delete(Long id) {
+        log.info("[CACHE] deleting news: {}", id);
         if (newsRepository.existsById(id)) newsRepository.deleteById(id);
         else throw new NewsNotFoundException(id);
     }
@@ -79,5 +92,17 @@ public class NewsService {
             throw new AccessDeniedException(
                     "You are not allowed to update this article.");
         }
+    }
+
+    @Async
+    public void printReport(){
+        for(News news: newsRepository.findAll())
+            log.info("[ASYNC LOG] News title: {}, reportedBy: {}, reportedAt: {}",
+                    news.getTitle(), news.getReportedBy(), news.getReportedAt() );
+    }
+
+    @Scheduled(fixedRate = 30000)
+    public void printStatistics(){
+        log.info("[SCHEDULE LOG] news count: {}", newsRepository.count());
     }
 }

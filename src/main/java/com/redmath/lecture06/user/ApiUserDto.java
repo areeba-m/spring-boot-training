@@ -1,4 +1,4 @@
-package com.redmath.lecture06;
+package com.redmath.lecture06.user;
 
 import lombok.Data;
 

@@ -54,4 +54,10 @@ public class NewsController {
         newsService.delete(newsId);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/report")
+    public ResponseEntity<String> findOne(){
+        newsService.printReport();
+        return ResponseEntity.ok("Report submitted successfully");
+    }
 }
