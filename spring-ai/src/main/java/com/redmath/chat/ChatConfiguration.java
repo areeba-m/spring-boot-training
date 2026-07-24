@@ -1,4 +1,4 @@
-package com.redmath.lecture02.chat;
+package com.redmath.chat;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
