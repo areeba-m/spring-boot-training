@@ -1,8 +1,5 @@
-package com.redmath.lecture02;
+package com.redmath.news;
 
-import com.redmath.lecture02.news.News;
-import com.redmath.lecture02.news.NewsCreateDto;
-import com.redmath.lecture02.news.NewsRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,4 +1,4 @@
-package com.redmath.lecture02.news;
+package com.redmath.news;
 
 import lombok.Data;
 

@@ -1,6 +1,6 @@
 package com.redmath.security;
 
-import com.redmath.lecture06.user.ApiUser;
+import com.redmath.user.ApiUser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;

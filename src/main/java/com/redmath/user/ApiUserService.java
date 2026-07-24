@@ -1,4 +1,4 @@
-package com.redmath.lecture06.user;
+package com.redmath.user;
 
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;

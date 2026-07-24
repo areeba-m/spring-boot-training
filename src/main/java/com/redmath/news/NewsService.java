@@ -1,4 +1,4 @@
-package com.redmath.lecture02.news;
+package com.redmath.news;
 
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;

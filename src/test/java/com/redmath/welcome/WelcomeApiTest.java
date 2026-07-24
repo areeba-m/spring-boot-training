@@ -1,9 +1,9 @@
-package com.redmath.lecture01;
+package com.redmath.welcome;
 
-import com.redmath.lecture01.welcome.WelcomeConfiguration;
-import com.redmath.lecture01.welcome.WelcomeController;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.cache.autoconfigure.CacheAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -21,6 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "welcome.app-message=Application Message",
         "WELCOME_ENV-MESSAGE=Environment Message"
 })
+//@ImportAutoConfiguration(CacheAutoConfiguration.class)
 class WelcomeApiTest {
 
     @Autowired

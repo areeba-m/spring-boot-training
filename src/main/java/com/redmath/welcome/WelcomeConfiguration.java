@@ -1,4 +1,4 @@
-package com.redmath.lecture01.welcome;
+package com.redmath.welcome;
 
 import lombok.Getter;
 import lombok.Setter;

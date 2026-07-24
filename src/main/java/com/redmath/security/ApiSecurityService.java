@@ -1,14 +1,13 @@
 package com.redmath.security;
 
-import com.redmath.lecture06.user.ApiUser;
-import com.redmath.lecture06.user.ApiUserService;
+import com.redmath.user.ApiUser;
+import com.redmath.user.ApiUserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.DefaultOAuth2AuthenticatedPrincipal;

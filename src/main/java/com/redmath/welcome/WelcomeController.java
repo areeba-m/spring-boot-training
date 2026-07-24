@@ -1,4 +1,4 @@
-package com.redmath.lecture01.welcome;
+package com.redmath.welcome;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
