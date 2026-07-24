@@ -94,6 +94,7 @@ public class NewsService {
         }
     }
 
+    @PreAuthorize("hasAnyRole('EDITOR', 'ADMIN')")
     @Async
     public void printReport(){
         for(News news: newsRepository.findAll())
