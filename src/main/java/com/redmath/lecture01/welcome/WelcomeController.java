@@ -32,7 +32,7 @@ public class WelcomeController {
         response.put("sys", sysMessage);
         response.put("env", envMessage);
         response.put("app", appMessage);
-        response.put("user", auth != null ? auth.getName() : "anonymous");
+        response.put("user", auth.getName());
         return response;
     }
 

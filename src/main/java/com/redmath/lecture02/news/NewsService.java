@@ -11,14 +11,16 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Service
 public class NewsService {
     private NewsRepository newsRepository;
     private NewsMapper newsMapper;
 
-    public NewsService(NewsRepository newsRepository) {
+    public NewsService(NewsRepository newsRepository, NewsMapper newsMapper) {
         this.newsRepository = newsRepository;
+        this.newsMapper = newsMapper;
     }
 
     public Page<News> findAll(int page, int size){
@@ -35,10 +37,7 @@ public class NewsService {
 
     @PreAuthorize("hasAnyRole('REPORTER', 'EDITOR', 'ADMIN')")
     public NewsResponseDto create(NewsCreateDto newsCreateDto){
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            throw new AccessDeniedException("User is not authenticated.");
-        }
+        Authentication auth = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication());
         News news = new News();
         news.setReportedBy(auth.getName());
         news.setNewsId(System.currentTimeMillis());
@@ -68,10 +67,7 @@ public class NewsService {
     }
 
     private void validateUpdatePermission(News news){
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            throw new AccessDeniedException("User is not authenticated.");
-        }
+        Authentication auth = Objects.requireNonNull(SecurityContextHolder.getContext().getAuthentication());
         boolean isOwner = auth.getName().equals(news.getReportedBy());
         boolean isEditor = auth.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)

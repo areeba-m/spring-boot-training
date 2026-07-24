@@ -4,15 +4,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class NewsMapper {
-    public News toEntity(NewsCreateDto dto) {
-        if (dto == null) return null;
-
-        News news = new News();
-        news.setTitle(dto.getTitle());
-        news.setDescription(dto.getDescription());
-        return news;
-    }
-
     public NewsResponseDto toResponseDto(News entity) {
         if (entity == null) return null;
 

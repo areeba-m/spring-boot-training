@@ -1,4 +1,4 @@
-package com.redmath.lecture06.user;
+package com.redmath.lecture06;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

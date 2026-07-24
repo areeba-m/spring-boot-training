@@ -1,4 +1,4 @@
-package com.redmath.lecture06.user;
+package com.redmath.lecture06;
 
 import java.util.ArrayList;
 import java.util.List;

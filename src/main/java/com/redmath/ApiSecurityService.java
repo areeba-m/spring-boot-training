@@ -1,7 +1,7 @@
 package com.redmath;
 
-import com.redmath.lecture06.user.ApiUser;
-import com.redmath.lecture06.user.ApiUserService;
+import com.redmath.lecture06.ApiUser;
+import com.redmath.lecture06.ApiUserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -63,7 +63,7 @@ public class ApiSecurityService implements InitializingBean {
 
     public void onAuthenticationSuccessOauth(HttpServletRequest request, HttpServletResponse response,
                                              Authentication authentication) throws IOException {
-        ApiUser user = userService.registerAndGenerateToken(getProviderUsername(authentication));
+        ApiUser user = userService.generateToken(getProviderUsername(authentication));
         generateToken(response, user);
     }
 
